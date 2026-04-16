@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>教師查詢</title>
+</head>
+<body style="font-family: sans-serif; padding: 30px;">
+    <h2>靜宜資管 - 教師查詢</h2>
+    <form action="/search" method="POST">
+        <input type="text" name="keyword" placeholder="輸入老師姓名" required>
+        <button type="submit">查詢</button>
+    </form>
+    {% if teachers %}
+        <ul>
+        {% for t in teachers %}
+            <li>{{ t.name }} - {{ t.lab }} - {{ t.mail }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    <br><a href="/">⬅ 返回首頁</a>
+</body>
+</html>
