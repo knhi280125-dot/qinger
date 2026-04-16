@@ -1,30 +1,46 @@
+import os
+import json
 from flask import Flask, render_template, request
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='templates', static_url_path='')
+app.config['PROPAGATE_EXCEPTIONS'] = True
 
-cred = credentials.Certificate("serviceAccountKey.json")
+# Kết nối Firebase
+cred_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
+
 if not firebase_admin._apps:
-    firebase_admin.initialize_app(cred)
+    try:
+        cred = credentials.Certificate(cred_path)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        print(f"Lỗi Firebase: {e}")
+
 db = firestore.client()
 
-@app.route("/")
+@app.route('/')
 def home():
-    return render_template("index.html")
+    # Thử gọi index.html, nếu không có thì gọi search.html để tránh lỗi 500
+    try:
+        return render_template('index.html')
+    except:
+        return render_template('search.html', teachers=[], keyword="Vui lòng kiểm tra file index.html trong templates")
 
-@app.route("/search", methods=["GET", "POST"])
+@app.route('/search', methods=['GET', 'POST'])
 def search():
-    if request.method == "POST":
-        keyword = request.form.get("keyword")
-        teachers = []
-        docs = db.collection("靜宜資管").stream()
-        for doc in docs:
-            data = doc.to_dict()
-            if keyword in data.get("name", ""):
-                teachers.append(data)
-        return render_template("search.html", teachers=teachers, keyword=keyword)
-    return render_template("search.html")
+    teachers = []
+    if request.method == 'POST':
+        keyword = request.form.get('keyword')
+        # Tìm trong collection của Nhi (靜宜資管)
+        try:
+            docs = db.collection("靜宜資管").stream()
+            for doc in docs:
+                data = doc.to_dict()
+                if keyword and keyword in str(data.get("name", "")):
+                    teachers.append(data)
+        except:
+            pass
+    return render_template('search.html', teachers=teachers)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+app = app
